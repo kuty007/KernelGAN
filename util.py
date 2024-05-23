@@ -217,16 +217,50 @@ def save_final_kernel(k_2, conf):
         sio.savemat(os.path.join(conf.output_dir_path, '%s_kernel_x4.mat' % conf.img_name), {'Kernel': k_4})
 
 
-def run_zssr(k_2, conf):
-    """Performs ZSSR with estimated kernel for wanted scale factor"""
+import numpy as np
+import os
+import time
+import matplotlib.pyplot as plt
+
+
+def run_zssr(patches, kernels, conf):
+    """Performs ZSSR with estimated kernel for each patch"""
     if conf.do_ZSSR:
         start_time = time.time()
-        print('~' * 30 + '\nRunning ZSSR X%d...' % (4 if conf.X4 else 2))
-        if conf.X4:
-            sr = ZSSR(conf.input_image_path, scale_factor=[[2, 2], [4, 4]], kernels=[k_2, analytic_kernel(k_2)], is_real_img=conf.real_image, noise_scale=conf.noise_scale).run()
-        else:
-            sr = ZSSR(conf.input_image_path, scale_factor=2, kernels=[k_2], is_real_img=conf.real_image, noise_scale=conf.noise_scale).run()
-        max_val = 255 if sr.dtype == 'uint8' else 1.
-        plt.imsave(os.path.join(conf.output_dir_path, 'ZSSR_%s.png' % conf.img_name), sr, vmin=0, vmax=max_val, dpi=1)
+        output_patches = []
+
+        for i, (patch, k) in enumerate(zip(patches, kernels)):
+            print('~' * 30 + '\nRunning ZSSR X%d on patch %d...' % ((4 if conf.X4 else 2), i + 1))
+            if conf.X4:
+                sr = ZSSR(patch, scale_factor=[[2, 2], [4, 4]], kernels=[k, analytic_kernel(k)],
+                          is_real_img=conf.real_image, noise_scale=conf.noise_scale).run()
+            else:
+                sr = ZSSR(patch, scale_factor=2, kernels=[k], is_real_img=conf.real_image,
+                          noise_scale=conf.noise_scale).run()
+            output_patches.append(sr)
+
+        output_image = combine_patches(output_patches, conf.n_filtering)
+        max_val = 255 if output_image.dtype == 'uint8' else 1.
+        plt.imsave(os.path.join(conf.output_dir_path, 'ZSSR_%s.png' % conf.img_name), output_image, vmin=0,
+                   vmax=max_val, dpi=1)
         runtime = int(time.time() - start_time)
         print('Completed! runtime=%d:%d\n' % (runtime // 60, runtime % 60) + '~' * 30)
+
+
+def combine_patches(patches, n):
+    num_patches = len(patches)
+    patch_size = patches[0].shape
+    side_length = int(np.sqrt(num_patches))
+    h, w = patch_size[0] * side_length, patch_size[1] * side_length
+
+    output_image = np.zeros((h, w, 3), dtype=patches[0].dtype)
+
+    k = 0
+    for i in range(side_length):
+        for j in range(side_length):
+            output_image[i * patch_size[0]:(i + 1) * patch_size[0], j * patch_size[1]:(j + 1) * patch_size[1], :] = \
+            patches[k]
+            k += 1
+
+    return output_image
+
