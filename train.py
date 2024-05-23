@@ -19,8 +19,6 @@ def train(conf):
     gan.finish()
 
 
-from PIL import Image
-
 def main():
     """The main function - performs kernel estimation (+ ZSSR) for all images in the 'test_images' folder"""
     import argparse
@@ -36,8 +34,7 @@ def main():
     # Run the KernelGAN sequentially on all images in the input directory
     for filename in os.listdir(os.path.abspath(args.input_dir)):
         image_path = os.path.join(args.input_dir, filename)
-        image = Image.open(image_path)  # Load the image
-        patch_imgs = divide_into_patches(image, num_patches=3)  # Adjust num_patches as needed
+        patch_imgs = divide_into_patches(image_path, num_patches=3)  # Adjust num_patches as needed
         # create dir from the img name
         img_dir = os.path.join(args.output_dir, os.path.splitext(filename)[0])  # create dir from the img name
         os.makedirs(img_dir, exist_ok=True)

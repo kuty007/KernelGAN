@@ -2,8 +2,9 @@ import cv2
 import numpy as np
 
 
-def divide_into_patches(image, num_patches, show_patches=False):
+def divide_into_patches(image_path, num_patches, show_patches=False):
     patches = []
+    image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
     h, w = image.shape[:2]
     patch_h = h // num_patches
     patch_w = w // num_patches
