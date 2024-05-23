@@ -40,9 +40,9 @@ def main():
         # create dir from the img name
         img_dir = os.path.join(args.output_dir, os.path.splitext(filename)[0])  # create dir from the img name
         os.makedirs(img_dir, exist_ok=True)
-        for img in patch_imgs:
+        for img, i in enumerate(patch_imgs):
             # save the patch
-            patch_path = os.path.join(img_dir, img)
+            patch_path = os.path.join(img_dir, i)
             # Save the patch image
             img.save(patch_path)
         res_patches = []
