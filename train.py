@@ -44,7 +44,7 @@ def main():
             # save the patch
             patch_path = os.path.join(img_dir, str(idx))
             # Save the patch image
-            img.save(patch_path)
+            img.save(img)
         res_patches = []
         for patch_name in os.listdir(img_dir):
             conf = Config().parse(create_params(patch_name, args))
