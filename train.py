@@ -33,7 +33,7 @@ def main():
     args = prog.parse_args()
     # Run the KernelGAN sequentially on all images in the input directory
     for filename in os.listdir(os.path.abspath(args.input_dir)):
-        patch_imgs = divide_into_patches(filename)
+        patch_imgs = divide_into_patches(filename, num_patches=3)  # Adjust num_patches as needed
         # create dir from the img name
         img_dir = os.path.join(args.output_dir, os.path.splitext(filename)[0])  # create dir from the img name
         os.makedirs(img_dir, exist_ok=True)
@@ -51,10 +51,12 @@ def main():
         combined_image_path = os.path.join(args.output_dir, filename)
         combine_patches(res_patches, combined_image_path)
         # Optionally remove all patch images
-        for patch_name in res_patches:
-            os.remove(os.path.join(img_dir, patch_name))
+        if args.remove_patches:
+            for patch_name in res_patches:
+                os.remove(os.path.join(img_dir, patch_name))
         print(f"Combined patches saved at: {combined_image_path}")
     prog.exit(0)
+
 
 
 def create_params(filename, args):
