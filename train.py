@@ -47,7 +47,7 @@ def train_on_patch(patch, conf):
     data = DataGenerator(conf, gan)
 
     for iteration in tqdm.tqdm(range(conf.max_iters), ncols=60):
-        g_in, d_in = data.__getitem__(0)  # Assuming batch size of 1 for simplicity
+        g_in, d_in = data.__getitem__(iteration)  # Assuming batch size of 1 for simplicity
         gan.train(g_in, d_in)
         learner.update(iteration, gan)
 
@@ -86,6 +86,9 @@ def main():
         for patch in patches:
             conf = Config().parse(create_params(filename, args))
             train_on_patch(patch, conf)  # Assuming this function trains KernelGAN on the patch and returns the result
+
+            # Store the result patch
+            result_patches.append(patch)  # Placeholder; replace with actual result patch
 
         # Combine the results from all patches into a single output image
         output_image = combine_patches(result_patches, input_image.shape)
