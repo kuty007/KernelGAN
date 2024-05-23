@@ -4,7 +4,7 @@ import numpy as np
 
 def divide_into_patches(image_path, num_patches, show_patches=False):
     patches = []
-    image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
+    image = cv2.imread(image_path)
     h, w = image.shape[:2]
     patch_h = h // num_patches
     patch_w = w // num_patches
@@ -23,13 +23,16 @@ def divide_into_patches(image_path, num_patches, show_patches=False):
     return patches
 
 
-def combine_patches(patches, image_shape):
+def combine_patches(patches, image_path):
+    image_shape = cv2.imread(image_path).shape
     h, w = image_shape[:2]
     combined_image = np.zeros((h, w, 3), dtype=np.uint8)
     for patch, (y0, x0) in patches:
         y1 = y0 + patch.shape[0]
         x1 = x0 + patch.shape[1]
         combined_image[y0:y1, x0:x1] = patch
+    if combined_image.shape != image_shape:
+        combined_image = resize_to_match(combined_image, image_shape)
     return combined_image
 
 
@@ -44,23 +47,11 @@ def validate_image_shape(original_image, result_image):
 
 
 def main(image_path, num_patches, show_patches=False):
-    image = cv2.imread(image_path)
-    if image is None:
-        raise FileNotFoundError(f"Image not found: {image_path}")
-
-    h, w = image.shape[:2]
-    if num_patches <= 0 or num_patches > min(h, w):
-        raise ValueError(
-            f"Invalid number of patches: {num_patches}. It must be a positive integer and less than or equal to the smaller dimension of the image ({min(h, w)}).")
-
-    patches = divide_into_patches(image, num_patches, show_patches)
-    result_image = combine_patches(patches, image.shape)
-
-    # Ensure the combined image matches the original image dimensions
-    if result_image.shape != image.shape:
-        result_image = resize_to_match(result_image, image.shape)
+    patches = divide_into_patches(image_path, num_patches, show_patches)
+    result_image = combine_patches(patches, image_path)
 
     # Validate if the original image and the result image have the same shape
+    image = cv2.imread(image_path)
     validate_image_shape(image, result_image)
 
     return result_image

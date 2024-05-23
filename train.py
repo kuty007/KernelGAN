@@ -1,4 +1,6 @@
 import os
+
+import cv2
 import tqdm
 
 from configs import Config
@@ -50,7 +52,10 @@ def main():
             res_patches.append(patch_name)
         # Combine patches
         combined_image_path = os.path.join(args.output_dir, filename)
-        combine_patches(res_patches, combined_image_path)
+        patchs = []
+        for p in res_patches:
+            patchs.append(cv2.imread(p))
+        combine_patches(patchs, combined_image_path)
         # Optionally remove all patch images
         if args.remove_patches:
             for patch_name in res_patches:
