@@ -40,11 +40,11 @@ def main():
         # create dir from the img name
         img_dir = os.path.join(args.output_dir, os.path.splitext(filename)[0])  # create dir from the img name
         os.makedirs(img_dir, exist_ok=True)
-        for img, i in enumerate(patch_imgs):
+        for idx, img in enumerate(patch_imgs):
             # save the patch
-            patch_path = os.path.join(img_dir, i)
+            patch_path = os.path.join(img_dir, f"patch_{idx}.png")  # Adjust the extension as needed
             # Save the patch image
-            img.save(patch_path)
+            cv2.imwrite(patch_path, img)  # Assuming you're using OpenCV for saving images
         res_patches = []
         for patch_name in os.listdir(img_dir):
             conf = Config().parse(create_params(patch_name, args))
