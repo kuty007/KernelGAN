@@ -42,7 +42,7 @@ def main():
         os.makedirs(img_dir, exist_ok=True)
         for idx, img in enumerate(patch_imgs):
             # save the patch
-            patch_path = os.path.join(img_dir, idx)
+            patch_path = os.path.join(img_dir, str(idx))
             # Save the patch image
             img.save(patch_path)
         res_patches = []
