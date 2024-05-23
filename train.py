@@ -41,11 +41,7 @@ def combine_patches(patches, image_shape):
     return combined_image
 
 
-def train_on_patch(patch, conf):
-    gan = KernelGAN(conf)
-    learner = Learner()
-    data = DataGenerator(conf, gan)
-
+def train_on_patch(patch, conf, gan, learner, data):
     for iteration in tqdm.tqdm(range(conf.max_iters), ncols=60):
         g_in, d_in = data.__getitem__(iteration)  # Assuming batch size of 1 for simplicity
         gan.train(g_in, d_in)
@@ -79,19 +75,21 @@ def main():
         # Divide the input image into patches
         patches = divide_into_patches(input_image, args.num_patches)
 
-        # Initialize an empty list to store the results for each patch
-        result_patches = []
+        # Initialize the KernelGAN, Learner, and DataGenerator instances
+        conf = Config().parse(create_params(filename, args))
+        gan = KernelGAN(conf)
+        learner = Learner()
+        data = DataGenerator(conf, gan)
 
         # Run the KernelGAN algorithm on each patch
         for patch in patches:
-            conf = Config().parse(create_params(filename, args))
-            train_on_patch(patch, conf)  # Assuming this function trains KernelGAN on the patch and returns the result
+            train_on_patch(patch, conf, gan, learner, data)
 
-            # Store the result patch
-            result_patches.append(patch)  # Placeholder; replace with actual result patch
+            # Placeholder; replace with actual result patch obtained after training the KernelGAN on each patch
+            result_patch = patch
 
         # Combine the results from all patches into a single output image
-        output_image = combine_patches(result_patches, input_image.shape)
+        output_image = combine_patches(patches, input_image.shape)
 
         # Save the output image
         output_image_path = os.path.join(output_dir_path, f"result_{filename}")
