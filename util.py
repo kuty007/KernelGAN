@@ -209,13 +209,15 @@ def kernel_shift(kernel, sf):
     return kernel
 
 
-def save_final_kernel(k_2, conf):
+def save_final_kernel(kernel, conf, idx):
     """saves the final kernel and the analytic kernel to the results folder"""
-    sio.savemat(os.path.join(conf.output_dir_path, '%s_kernel_x2.mat' % conf.img_name), {'Kernel': k_2})
+    kernel_dir = os.path.join(conf.output_dir_path, 'kernels')
+    os.makedirs(kernel_dir, exist_ok=True)
+    filename = f'{conf.img_name}_kernel_patch_{idx}'
+    sio.savemat(os.path.join(kernel_dir, f'{filename}_x2.mat'), {'Kernel': kernel})
     if conf.X4:
-        k_4 = analytic_kernel(k_2)
-        sio.savemat(os.path.join(conf.output_dir_path, '%s_kernel_x4.mat' % conf.img_name), {'Kernel': k_4})
-
+        k_4 = analytic_kernel(kernel)
+        sio.savemat(os.path.join(kernel_dir, f'{filename}_x4.mat'), {'Kernel': k_4})
 
 import numpy as np
 import os
