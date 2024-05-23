@@ -120,8 +120,29 @@ class KernelGAN:
         self.optimizer_D.step()
 
     def finish(self):
-        final_kernel = post_process_k(self.curr_k, n=self.conf.n_filtering)
-        save_final_kernel(final_kernel, self.conf)
-        print('KernelGAN estimation complete!')
-        run_zssr(final_kernel, self.conf)
+        img_patches = split_image_into_patches(self.conf.input_image_path, n=self.conf.n_filtering)
+        kernels = [post_process_k(self.curr_k, n=self.conf.n_filtering) for _ in range(len(img_patches))]
+
+        for idx, kernel in enumerate(kernels):
+            save_final_kernel(kernel, self.conf, idx)
+
+        print('KernelGAN estimation complete for each patch!')
+
+        run_zssr(img_patches, kernels, self.conf)
         print('FINISHED RUN (see --%s-- folder)\n' % self.conf.output_dir_path + '*' * 60 + '\n\n')
+
+
+import numpy as np
+import cv2
+def split_image_into_patches(image_path, n):
+    img = cv2.imread(image_path)
+    h, w, _ = img.shape
+    patch_h, patch_w = h // int(np.sqrt(n)), w // int(np.sqrt(n))
+
+    patches = []
+    for i in range(0, h, patch_h):
+        for j in range(0, w, patch_w):
+            patch = img[i:i + patch_h, j:j + patch_w]
+            patches.append(patch)
+
+    return patches
