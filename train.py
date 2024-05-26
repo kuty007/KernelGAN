@@ -1,5 +1,9 @@
 import os
+import shutil
 import tqdm
+import argparse
+import cv2
+import numpy as np
 
 from configs import Config
 from data import DataGenerator
@@ -19,10 +23,20 @@ def train(conf):
     gan.finish()
 
 
+def create_params(filename, args):
+    params = ['--input_image_path', filename,
+              '--output_dir_path', os.path.abspath(args.output_dir),
+              '--noise_scale', str(args.noise_scale)]
+    if args.X4:
+        params.append('--X4')
+    if args.SR:
+        params.append('--do_ZSSR')
+    if args.real:
+        params.append('--real_image')
+    return params
+
+
 def main():
-    import argparse
-    import shutil
-    import cv2
     """The main function - performs kernel estimation (+ ZSSR) for all images in the 'test_images' folder"""
     # Parse the command line arguments
     prog = argparse.ArgumentParser()
@@ -40,17 +54,22 @@ def main():
     for filename in os.listdir(input_dir):
         if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
             image_path = os.path.join(input_dir, filename)
-            patch_imgs = divide_into_patches(image_path, num_patches=3, show_patches=False) # 3X3 patches = 9
+            patch_imgs = divide_into_patches(image_path, num_patches=3, show_patches=False)  # 3x3 patches = 9
             img_dir = os.path.join(input_dir, os.path.splitext(filename)[0])
             os.makedirs(img_dir, exist_ok=True)
-            print(f"Image Path = {image_path}, Image Dir: {img_dir}, Num of Patches = {len(patch_imgs)}." )
+            print(f"Image Path = {image_path}, Image Dir: {img_dir}, Num of Patches = {len(patch_imgs)}.")
 
             patch_paths = []
             for idx, img in enumerate(patch_imgs):
                 patch_path = os.path.join(img_dir, f"patch_{idx}.png")
                 print(f"Patch Path = {patch_path}")
-                cv2.imwrite(patch_path, img)
-                patch_paths.append(patch_path)
+
+                # Validate patch image
+                if isinstance(img, np.ndarray) and img.ndim == 3 and img.shape[2] in [1, 3, 4] and img.dtype == np.uint8:
+                    cv2.imwrite(patch_path, img)
+                    patch_paths.append(patch_path)
+                else:
+                    raise ValueError(f"Patch image at index {idx} is not a valid image array")
 
                 conf = Config().parse(create_params(patch_path, args))
                 train(conf)
@@ -60,7 +79,13 @@ def main():
             combined_image_path = os.path.join(output_dir, filename)
             output_patch_paths = [os.path.join(output_img_dir, f"patch_{idx}.png") for idx in range(len(patch_imgs))]
             patch_imgs = [cv2.imread(p) for p in output_patch_paths]  # Read the patch images
-            combine_patches(patch_imgs, image_path)
+
+            # Validate read patch images
+            if any(img is None for img in patch_imgs):
+                raise ValueError("One or more patches could not be read")
+
+            combined_image = combine_patches(patch_imgs, image_path)
+            cv2.imwrite(combined_image_path, combined_image)
 
             # Remove intermediate patch images and directories from both input and output directories
             for patch_path in patch_paths:
@@ -76,18 +101,5 @@ def main():
     prog.exit(0)
 
 
-def create_params(filename, args):
-    params = ['--input_image_path', os.path.join(args.input_dir, filename),
-              '--output_dir_path', os.path.abspath(args.output_dir),
-              '--noise_scale', str(args.noise_scale)]
-    if args.X4:
-        params.append('--X4')
-    if args.SR:
-        params.append('--do_ZSSR')
-    if args.real:
-        params.append('--real_image')
-    return params
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

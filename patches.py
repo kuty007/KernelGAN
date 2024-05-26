@@ -15,7 +15,7 @@ def divide_into_patches(image_path, num_patches, show_patches=False):
             x0 = j * patch_w
             x1 = (j + 1) * patch_w if j < num_patches - 1 else w
             patch = image[y0:y1, x0:x1]
-            patches.append((patch, (y0, x0)))
+            patches.append(patch)
             if show_patches:
                 cv2.imshow(f'Patch ({i}, {j})', patch)
                 cv2.waitKey(0)  # Wait for a key press to show the next patch
@@ -26,11 +26,21 @@ def divide_into_patches(image_path, num_patches, show_patches=False):
 def combine_patches(patches, image_path):
     image_shape = cv2.imread(image_path).shape
     h, w = image_shape[:2]
+    num_patches = int(np.sqrt(len(patches)))
+    patch_h = h // num_patches
+    patch_w = w // num_patches
+
     combined_image = np.zeros((h, w, 3), dtype=np.uint8)
-    for patch, (y0, x0) in patches:
-        y1 = y0 + patch.shape[0]
-        x1 = x0 + patch.shape[1]
-        combined_image[y0:y1, x0:x1] = patch
+    idx = 0
+    for i in range(num_patches):
+        for j in range(num_patches):
+            y0 = i * patch_h
+            y1 = (i + 1) * patch_h if i < num_patches - 1 else h
+            x0 = j * patch_w
+            x1 = (j + 1) * patch_w if j < num_patches - 1 else w
+            combined_image[y0:y1, x0:x1] = patches[idx]
+            idx += 1
+
     if combined_image.shape != image_shape:
         combined_image = resize_to_match(combined_image, image_shape)
     return combined_image
