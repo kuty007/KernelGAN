@@ -42,12 +42,12 @@ def combine_patches(patches, image_path, factor=2):
             idx += 1
 
     if combined_image.shape != image_shape*factor:
-        combined_image = resize_to_match(combined_image, image_shape)
+        combined_image = resize_to_match(combined_image, image_shape, factor)
     return combined_image
 
 
-def resize_to_match(image, target_shape):
-    return cv2.resize(image, (target_shape[1], target_shape[0]))
+def resize_to_match(image, target_shape, factor=2):
+    return cv2.resize(image, (target_shape[1]*factor, target_shape[0]*factor))
 
 
 def validate_image_shape(original_image, result_image, factor=2):
