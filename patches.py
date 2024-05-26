@@ -24,7 +24,7 @@ def divide_into_patches(image_path, num_patches, show_patches=False):
 
 
 def combine_patches(patches, image_path, factor=2):
-    image_shape = cv2.imread(image_path).shape
+    image_shape = cv2.imread(image_path).shape*factor
     h, w = image_shape[:2]
     num_patches = int(np.sqrt(len(patches)))
     patch_h = h // num_patches
