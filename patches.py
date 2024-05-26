@@ -24,13 +24,13 @@ def divide_into_patches(image_path, num_patches, show_patches=False):
 
 
 def combine_patches(patches, image_path, factor=2):
-    image_shape = cv2.imread(image_path).shape*factor
+    image_shape = cv2.imread(image_path).shape
     h, w = image_shape[:2]
     num_patches = int(np.sqrt(len(patches)))
     patch_h = h // num_patches
     patch_w = w // num_patches
 
-    combined_image = np.zeros((h, w, 3), dtype=np.uint8)
+    combined_image = np.zeros((h*factor, w*factor, 3), dtype=np.uint8)
     idx = 0
     for i in range(num_patches):
         for j in range(num_patches):
@@ -41,7 +41,8 @@ def combine_patches(patches, image_path, factor=2):
             combined_image[y0:y1, x0:x1] = patches[idx]
             idx += 1
 
-    if combined_image.shape != image_shape*factor:
+    if (image_shape.shape[0] * factor != combined_image.shape[0] or
+            image_shape.shape[1] * factor != combined_image.shape[1]):
         combined_image = resize_to_match(combined_image, image_shape, factor)
     return combined_image
 
@@ -51,7 +52,8 @@ def resize_to_match(image, target_shape, factor=2):
 
 
 def validate_image_shape(original_image, result_image, factor=2):
-    if original_image.shape*factor != result_image.shape:
+    if (original_image.shape[0]*factor != result_image.shape[0] or
+            original_image.shape[1]*factor != result_image.shape[1]):
         raise ValueError(
             f"Shape mismatch: original image shape {original_image.shape}, result image shape {result_image.shape}")
 
