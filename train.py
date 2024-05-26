@@ -1,6 +1,4 @@
 import os
-
-import cv2
 import tqdm
 
 from configs import Config
@@ -22,8 +20,10 @@ def train(conf):
 
 
 def main():
-    """The main function - performs kernel estimation (+ ZSSR) for all images in the 'test_images' folder"""
     import argparse
+    import shutil
+    import cv2
+    """The main function - performs kernel estimation (+ ZSSR) for all images in the 'test_images' folder"""
     # Parse the command line arguments
     prog = argparse.ArgumentParser()
     prog.add_argument('--input-dir', '-i', type=str, default='test_images', help='path to image input directory.')
@@ -33,37 +33,45 @@ def main():
     prog.add_argument('--real', action='store_true', help='ZSSRs configuration is for real images')
     prog.add_argument('--noise_scale', type=float, default=1., help='ZSSR uses this to partially de-noise images')
     args = prog.parse_args()
-    # Run the KernelGAN sequentially on all images in the input directory
-    for filename in os.listdir(os.path.abspath(args.input_dir)):
-        image_path = os.path.join(args.input_dir, filename)
-        patch_imgs = divide_into_patches(image_path, num_patches=3)  # Adjust num_patches as needed
-        # create dir from the img name
-        img_dir = os.path.join(args.output_dir, os.path.splitext(filename)[0])  # create dir from the img name
-        os.makedirs(img_dir, exist_ok=True)
-        for idx, img in enumerate(patch_imgs):
-            # save the patch
-            patch_path = os.path.join(img_dir, str(idx))
-            # Save the patch image
-            img.save(img)
-        res_patches = []
-        for patch_name in os.listdir(img_dir):
-            conf = Config().parse(create_params(patch_name, args))
-            train(conf)
-            res_patches.append(patch_name)
-        # Combine patches
-        combined_image_path = os.path.join(args.output_dir, filename)
-        patchs = []
-        for p in res_patches:
-            patchs.append(cv2.imread(p))
-        combine_patches(patchs, combined_image_path)
-        # Optionally remove all patch images
-        if args.remove_patches:
-            for patch_name in res_patches:
-                os.remove(os.path.join(img_dir, patch_name))
-        print(f"Combined patches saved at: {combined_image_path}")
+
+    input_dir = os.path.abspath(args.input_dir)
+    output_dir = os.path.abspath(args.output_dir)
+
+    for filename in os.listdir(input_dir):
+        if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+            image_path = os.path.join(input_dir, filename)
+            patch_imgs = divide_into_patches(image_path, num_patches=3) # 3X3 patches = 9
+            img_dir = os.path.join(input_dir, os.path.splitext(filename)[0])
+            os.makedirs(img_dir, exist_ok=True)
+
+            patch_paths = []
+            for idx, img in enumerate(patch_imgs):
+                patch_path = os.path.join(img_dir, f"patch_{idx}.png")
+                cv2.imwrite(patch_path, img)
+                patch_paths.append(patch_path)
+
+                conf = Config().parse(create_params(patch_path, args))
+                train(conf)
+
+            # Combine patches from the output directory
+            output_img_dir = os.path.join(output_dir, os.path.splitext(filename)[0])
+            combined_image_path = os.path.join(output_dir, filename)
+            output_patch_paths = [os.path.join(output_img_dir, f"patch_{idx}.png") for idx in range(len(patch_imgs))]
+            patch_imgs = [cv2.imread(p) for p in output_patch_paths]  # Read the patch images
+            combine_patches(patch_imgs, image_path)
+
+            # Remove intermediate patch images and directories from both input and output directories
+            for patch_path in patch_paths:
+                os.remove(patch_path)
+            shutil.rmtree(img_dir)  # Remove the input directory and its contents
+
+            for patch_path in output_patch_paths:
+                os.remove(patch_path)
+            shutil.rmtree(output_img_dir)  # Remove the output directory and its contents
+
+            print(f"Combined patches saved at: {combined_image_path}")
+
     prog.exit(0)
-
-
 
 
 def create_params(filename, args):
