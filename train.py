@@ -65,7 +65,8 @@ def main():
                 print(f"Patch Path = {patch_path}")
 
                 # Validate patch image
-                if isinstance(img, np.ndarray) and img.ndim == 3 and img.shape[2] in [1, 3, 4] and img.dtype == np.uint8:
+                if isinstance(img, np.ndarray) and img.ndim == 3 and img.shape[2] in [1, 3,
+                                                                                      4] and img.dtype == np.uint8:
                     cv2.imwrite(patch_path, img)
                     patch_paths.append(patch_path)
                 else:
@@ -84,7 +85,7 @@ def main():
             if any(img is None for img in patch_imgs):
                 raise ValueError("One or more patches could not be read")
 
-            combined_image = combine_patches(patch_imgs, image_path)
+            combined_image = combine_patches(patch_imgs, image_path, factor=4 if args.X4 else 2)
             cv2.imwrite(combined_image_path, combined_image)
 
             # Remove intermediate patch images and directories from both input and output directories

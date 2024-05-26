@@ -23,7 +23,7 @@ def divide_into_patches(image_path, num_patches, show_patches=False):
     return patches
 
 
-def combine_patches(patches, image_path):
+def combine_patches(patches, image_path, factor=2):
     image_shape = cv2.imread(image_path).shape
     h, w = image_shape[:2]
     num_patches = int(np.sqrt(len(patches)))
@@ -41,7 +41,7 @@ def combine_patches(patches, image_path):
             combined_image[y0:y1, x0:x1] = patches[idx]
             idx += 1
 
-    if combined_image.shape != image_shape:
+    if combined_image.shape != image_shape*factor:
         combined_image = resize_to_match(combined_image, image_shape)
     return combined_image
 
@@ -50,8 +50,8 @@ def resize_to_match(image, target_shape):
     return cv2.resize(image, (target_shape[1], target_shape[0]))
 
 
-def validate_image_shape(original_image, result_image):
-    if original_image.shape != result_image.shape:
+def validate_image_shape(original_image, result_image, factor=2):
+    if original_image.shape*factor != result_image.shape:
         raise ValueError(
             f"Shape mismatch: original image shape {original_image.shape}, result image shape {result_image.shape}")
 
@@ -62,7 +62,7 @@ def main(image_path, num_patches, show_patches=False):
 
     # Validate if the original image and the result image have the same shape
     image = cv2.imread(image_path)
-    validate_image_shape(image, result_image)
+    validate_image_shape(image, result_image, 1)
 
     return result_image
 
