@@ -40,7 +40,7 @@ def main():
     for filename in os.listdir(input_dir):
         if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
             image_path = os.path.join(input_dir, filename)
-            patch_imgs = divide_into_patches(image_path, num_patches=3, show_patches=True) # 3X3 patches = 9
+            patch_imgs = divide_into_patches(image_path, num_patches=3, show_patches=False) # 3X3 patches = 9
             img_dir = os.path.join(input_dir, os.path.splitext(filename)[0])
             os.makedirs(img_dir, exist_ok=True)
             print(f"Image Path = {image_path}, Image Dir: {img_dir}, Num of Patches = {len(patch_imgs)}." )
