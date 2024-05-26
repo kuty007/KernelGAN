@@ -30,21 +30,22 @@ def combine_patches(patches, image_path, factor=2):
     patch_h = h // num_patches
     patch_w = w // num_patches
 
-    combined_image = np.zeros((h*factor, w*factor, 3), dtype=np.uint8)
+    combined_image = np.zeros((h * factor, w * factor, 3), dtype=np.uint8)
     idx = 0
     for i in range(num_patches):
         for j in range(num_patches):
-            y0 = i * patch_h
-            y1 = (i + 1) * patch_h if i < num_patches - 1 else h
-            x0 = j * patch_w
-            x1 = (j + 1) * patch_w if j < num_patches - 1 else w
+            y0 = i * patch_h * factor
+            y1 = (i + 1) * patch_h * factor if i < num_patches - 1 else h * factor
+            x0 = j * patch_w * factor
+            x1 = (j + 1) * patch_w * factor if j < num_patches - 1 else w * factor
             combined_image[y0:y1, x0:x1] = patches[idx]
             idx += 1
 
-    if (image_shape.shape[0] * factor != combined_image.shape[0] or
-            image_shape.shape[1] * factor != combined_image.shape[1]):
+    if (h * factor != combined_image.shape[0] or w * factor != combined_image.shape[1]):
         combined_image = resize_to_match(combined_image, image_shape, factor)
     return combined_image
+
+
 
 
 def resize_to_match(image, target_shape, factor=2):
